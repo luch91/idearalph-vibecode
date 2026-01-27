@@ -23,31 +23,33 @@ When analyzing code:
 
 Be helpful and educational, not alarmist.`;
 
-export const ANALYSIS_PROMPT = `Analyze the following code diff for security vulnerabilities.
+export const ANALYSIS_PROMPT = `You are a JSON-only security scanner. Analyze this code diff for security vulnerabilities.
 
 File: {filename}
 Language: {language}
 
 Diff:
-\`\`\`
 {diff}
-\`\`\`
 
-Respond with a JSON array of findings. Each finding should have:
-- type: The vulnerability type (e.g., "SQL Injection", "XSS", "Hardcoded Secret")
-- severity: "critical", "high", "medium", or "low"
-- line: The line number in the NEW file where the issue exists
-- description: Clear explanation of WHY this is a security issue
-- suggestion: Specific code fix recommendation
-- cweId: The CWE ID if applicable (e.g., "CWE-89")
-- owaspCategory: Which OWASP Top 10 category this falls under
-- confidence: 0.0 to 1.0 how confident you are this is a real issue
+IMPORTANT: You MUST respond with ONLY a JSON array. No text before or after. No markdown. No explanation.
 
-If there are no security issues, return an empty array: []
+Example response for code with issues:
+[{"type":"SQL Injection","severity":"critical","line":1,"description":"User input concatenated into SQL query","suggestion":"Use parameterized queries","cweId":"CWE-89","owaspCategory":"Injection","confidence":0.9}]
 
-Only report issues with confidence >= 0.7. Do not report style issues, only security issues.
+Example response for safe code:
+[]
 
-Respond ONLY with valid JSON, no markdown or explanation.`;
+Each finding needs these exact fields:
+- "type": string (e.g. "SQL Injection", "XSS", "Hardcoded Secret", "Command Injection")
+- "severity": "critical" or "high" or "medium" or "low"
+- "line": number
+- "description": string
+- "suggestion": string
+- "cweId": string
+- "owaspCategory": string
+- "confidence": number between 0 and 1
+
+Now analyze the diff above. Output ONLY the JSON array, nothing else:`;
 
 export function buildAnalysisPrompt(filename: string, diff: string): string {
   const language = detectLanguage(filename);

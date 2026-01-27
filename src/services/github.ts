@@ -56,26 +56,11 @@ export async function postReviewComments(
     return;
   }
 
-  const comments = findings.map(finding => ({
-    path: finding.file,
-    line: finding.line,
-    body: formatFindingComment(finding),
-  }));
-
-  try {
-    await octokit.pulls.createReview({
-      owner: context.owner,
-      repo: context.repo,
-      pull_number: context.pullNumber,
-      commit_id: context.headSha,
-      event: 'COMMENT',
-      comments,
-    });
-  } catch (error) {
-    console.error('Error posting review comments:', error);
-    // Fallback: post as individual issue comments
-    for (const finding of findings) {
+  for (const finding of findings) {
+    try {
       await postIssueComment(context, finding);
+    } catch (error) {
+      console.error(`Error posting comment for ${finding.file}:${finding.line}:`, error);
     }
   }
 }
@@ -130,9 +115,13 @@ export async function updateCommitStatus(
     sha: context.headSha,
     state,
     context: 'SecureShip Security Review',
-    description: result.summary.slice(0, 140),
+    description: stripEmoji(result.summary).slice(0, 140),
     target_url: undefined,
   });
+}
+
+function stripEmoji(text: string): string {
+  return text.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F900}-\u{1F9FF}]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 function formatFindingComment(finding: SecurityFinding): string {

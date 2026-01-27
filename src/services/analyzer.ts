@@ -1,8 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { SecurityFinding, AnalysisResult, PullRequestFile } from '../types';
 import { SYSTEM_PROMPT, buildAnalysisPrompt } from '../prompts/security';
 
-const anthropic = new Anthropic();
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 
 export async function analyzeFile(file: PullRequestFile): Promise<SecurityFinding[]> {
   if (!file.patch) {
@@ -12,24 +11,34 @@ export async function analyzeFile(file: PullRequestFile): Promise<SecurityFindin
   const prompt = buildAnalysisPrompt(file.filename, file.patch);
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+    const response = await fetch(`${OLLAMA_URL}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama3',
+        system: SYSTEM_PROMPT,
+        prompt,
+        stream: false,
+      }),
     });
 
-    const content = response.content[0];
-    if (content.type !== 'text') {
+    if (!response.ok) {
+      throw new Error(`Ollama error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as { response: string };
+    const text = data.response;
+
+    console.log(`Ollama response for ${file.filename}:`, text.slice(0, 500));
+
+    // Extract JSON from response (LLM may wrap in markdown code blocks)
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.log(`No JSON array found in response for ${file.filename}`);
       return [];
     }
 
-    const findings = JSON.parse(content.text) as SecurityFinding[];
+    const findings = JSON.parse(jsonMatch[0]) as SecurityFinding[];
 
     // Add filename to each finding and filter by confidence
     return findings
