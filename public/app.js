@@ -1,6 +1,71 @@
 let currentPage = 1;
 const limit = 20;
 
+// On-demand PR scan
+async function scanPR() {
+  const repoInput = document.getElementById('repoInput');
+  const prInput = document.getElementById('prInput');
+  const statusDiv = document.getElementById('scanFormStatus');
+  const scanBtn = document.getElementById('scanBtn');
+
+  const repo = repoInput.value.trim();
+  const pr = parseInt(prInput.value);
+
+  if (!repo || !repo.includes('/')) {
+    statusDiv.textContent = 'Please enter a valid repository (owner/repo)';
+    statusDiv.className = 'form-status error';
+    return;
+  }
+
+  if (!pr || pr < 1) {
+    statusDiv.textContent = 'Please enter a valid PR number';
+    statusDiv.className = 'form-status error';
+    return;
+  }
+
+  // Disable button and show loading
+  scanBtn.disabled = true;
+  statusDiv.textContent = `Scanning ${repo} PR #${pr}... This may take a moment.`;
+  statusDiv.className = 'form-status loading';
+
+  try {
+    const response = await fetch('/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo, pr }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      statusDiv.textContent = data.error || 'Scan failed';
+      statusDiv.className = 'form-status error';
+      return;
+    }
+
+    // Success
+    const findings = data.scan.findings.length;
+    const risk = data.scan.overallRisk;
+    statusDiv.textContent = `Scan complete! Found ${findings} issue(s). Risk: ${risk.toUpperCase()}`;
+    statusDiv.className = 'form-status success';
+
+    // Refresh stats and scans
+    loadStats();
+    loadScans(1);
+
+    // Clear inputs
+    repoInput.value = '';
+    prInput.value = '';
+
+  } catch (err) {
+    console.error('Scan error:', err);
+    statusDiv.textContent = 'Network error. Please try again.';
+    statusDiv.className = 'form-status error';
+  } finally {
+    scanBtn.disabled = false;
+  }
+}
+
 async function loadStats() {
   try {
     const response = await fetch('/api/stats');

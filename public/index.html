@@ -18,6 +18,28 @@
   </nav>
 
   <div class="container">
+    <!-- On-Demand Scan Form -->
+    <section class="scan-form-section">
+      <h2>Scan a Pull Request</h2>
+      <p class="form-description">Enter a public GitHub repository and PR number to scan for security issues</p>
+      <div class="scan-form">
+        <input
+          type="text"
+          id="repoInput"
+          placeholder="owner/repo"
+          spellcheck="false"
+        />
+        <input
+          type="number"
+          id="prInput"
+          placeholder="PR #"
+          min="1"
+        />
+        <button id="scanBtn" onclick="scanPR()">Scan PR</button>
+      </div>
+      <div id="scanFormStatus" class="form-status"></div>
+    </section>
+
     <!-- Stats Cards -->
     <section class="stats-grid">
       <div class="stat-card">
