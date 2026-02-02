@@ -1,37 +1,41 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import webhookRouter from './routes/webhook';
+import apiRouter from './routes/api';
+import { loadScans } from './services/storage';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Load existing scans
+loadScans();
+
 // Parse JSON bodies
 app.use(express.json());
 
+// Serve static files
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Mount routes
 app.use(webhookRouter);
-
-// Root endpoint
-app.get('/', (_req, res) => {
-  res.json({
-    name: 'SecureShip',
-    description: 'AI-powered security code review for GitHub PRs',
-    version: '1.0.0',
-    endpoints: {
-      webhook: 'POST /webhook',
-      health: 'GET /health',
-    },
-  });
-});
+app.use('/api', apiRouter);
 
 app.listen(PORT, () => {
   console.log(`
 🛡️  SecureShip is running on port ${PORT}
 
+Dashboard:  http://localhost:${PORT}
+API:        http://localhost:${PORT}/api
+
 Endpoints:
-  POST /webhook  - GitHub webhook receiver
-  GET  /health   - Health check
-  GET  /         - Service info
+  GET  /              - Dashboard
+  GET  /notable.html  - Notable findings
+  POST /webhook       - GitHub webhook receiver
+  GET  /api/health    - Health check
+  GET  /api/stats     - Statistics
+  GET  /api/scans     - List scans
+  GET  /api/notable   - Notable findings
 
 To test locally:
   1. Use smee.io or ngrok to tunnel webhooks
@@ -43,6 +47,5 @@ Environment variables needed:
   - GITHUB_APP_ID
   - GITHUB_PRIVATE_KEY
   - GITHUB_WEBHOOK_SECRET
-  - ANTHROPIC_API_KEY
 `);
 });

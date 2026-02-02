@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureShip - AI Security Code Review</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>SecureShip</h1>
+    <p class="subtitle">AI-Powered Security Code Review for GitHub PRs</p>
+  </header>
+
+  <nav class="nav-bar">
+    <a href="/" class="active">Dashboard</a>
+    <a href="/notable.html">Notable Findings</a>
+  </nav>
+
+  <div class="container">
+    <!-- Stats Cards -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number" id="totalScans">-</div>
+        <div class="stat-label">PRs Scanned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalFindings">-</div>
+        <div class="stat-label">Issues Found</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="criticalHigh">-</div>
+        <div class="stat-label">Critical + High</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="lastScan">-</div>
+        <div class="stat-label">Last Scan</div>
+      </div>
+    </section>
+
+    <!-- Findings Summary -->
+    <section class="findings-summary">
+      <h2>Findings Overview</h2>
+      <div class="findings-bars">
+        <div class="finding-row">
+          <span class="severity-badge critical">CRITICAL</span>
+          <span class="finding-count" id="criticalCount">0</span>
+        </div>
+        <div class="finding-row">
+          <span class="severity-badge high">HIGH</span>
+          <span class="finding-count" id="highCount">0</span>
+        </div>
+        <div class="finding-row">
+          <span class="severity-badge medium">MEDIUM</span>
+          <span class="finding-count" id="mediumCount">0</span>
+        </div>
+        <div class="finding-row">
+          <span class="severity-badge low">LOW</span>
+          <span class="finding-count" id="lowCount">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scan Table -->
+    <section class="scan-section">
+      <h2>Recent Scans</h2>
+      <table class="scan-table">
+        <thead>
+          <tr>
+            <th>Repository</th>
+            <th>PR</th>
+            <th>Risk</th>
+            <th>Findings</th>
+            <th>Files</th>
+            <th>Scanned</th>
+          </tr>
+        </thead>
+        <tbody id="scanTableBody">
+          <tr><td colspan="6" class="loading">Loading scans...</td></tr>
+        </tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+    <!-- Scan Detail Modal -->
+    <div class="modal" id="scanModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <div id="scanDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>SecureShip - AI-powered security scanning for GitHub pull requests</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

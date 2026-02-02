@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import {
   initializeOctokit,
   getPullRequestFiles,
@@ -8,6 +9,7 @@ import {
   updateCommitStatus,
 } from '../services/github';
 import { analyzeFiles } from '../services/analyzer';
+import { saveScan, ScanReport } from '../services/storage';
 import { PullRequestContext } from '../types';
 
 const router = Router();
@@ -86,6 +88,22 @@ router.post('/webhook', async (req: Request, res: Response) => {
     const result = await analyzeFiles(context.files);
 
     console.log(`Analysis complete: ${result.findings.length} findings`);
+
+    // Save scan to storage
+    const scanReport: ScanReport = {
+      id: uuidv4(),
+      owner: context.owner,
+      repo: context.repo,
+      pullNumber: context.pullNumber,
+      headSha: context.headSha,
+      scannedAt: Date.now(),
+      filesScanned: context.files.length,
+      findings: result.findings,
+      summary: result.summary,
+      overallRisk: result.overallRisk,
+    };
+    saveScan(scanReport);
+    console.log(`Saved scan report: ${scanReport.id}`);
 
     // Post results to GitHub
     await Promise.all([
